@@ -6,7 +6,6 @@ const process = require('process');
 
 exports.registerUser = async (req, res) => {
   try {
-    // Trim and clean input
     const name = req.body.name.trim();
     const email = req.body.email.trim().toLowerCase();
     const password = req.body.password;
@@ -40,7 +39,19 @@ exports.loginUser = async (req, res) => {
       return res.status(500).json({ message: "JWT secret not set" });
     }
 
-    const token = jwt.sign({ userId: user._id, email: user.email }, process.env.JWT_SECRET, {
+
+// Takes a payload ({ userId, email })
+// Signs it with JWT_SECRET (must be private)
+// Returns a token string valid for 1 hour
+// After verifying credentials, you build a payload (e.g. { userId: user._id, email: user.email }).
+// You sign it with your secret: jwt.sign(payload, process.env.JWT_SECRET, { expiresIn: '1h' }).
+// The result is a compact token string (header.payload.signature).
+// Sending the token to the client
+// You return the token in the JSON response:
+// { message: "Login successful", token, user: { id, name, email } }.
+// Client receives this token and must store it for subsequent requests.
+
+  const token = jwt.sign({ userId: user._id, email: user.email }, process.env.JWT_SECRET, {
       expiresIn: '1h'
     });
 
