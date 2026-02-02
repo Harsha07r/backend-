@@ -1,6 +1,7 @@
 const express = require('express');
 const mongoose = require('mongoose');
 const cors = require('cors');
+const cookieParser = require('cookie-parser');
 require('dotenv').config();
 
 // Import routes
@@ -14,11 +15,21 @@ const authMiddleware = require('./middleware/authMiddleware');
 
 const app = express();
 
-// Middleware
-app.use(cors());
-app.use(express.json());
+// ===== MIDDLEWARE =====
+app.use(cors({
+  origin: [
+    "https://www.royalhorizon.in",
+    "https://royalhorizon.in",
+    "http://localhost:5173"
+  ],
+  methods: ["GET", "POST", "PUT", "DELETE"],
+  credentials: true
+}));
 
-// Routes
+app.use(express.json());
+app.use(cookieParser());
+
+// ===== ROUTES =====
 app.use('/api/auth', authRoutes);
 app.use('/api/contact', contactRoutes);
 app.use('/api/bookings', bookingsRouter);
@@ -36,30 +47,24 @@ app.get('/api/protected', authMiddleware, (req, res) => {
 app.get('/', (req, res) => {
   res.json({ 
     message: 'Travel Booking API is running',
-    version: '1.0.0',
-    endpoints: {
-      auth: '/api/auth',
-      contact: '/api/contact',
-      bookings: '/api/bookings',
-      admin: '/api/admin'
-    }
+    version: '1.0.0'
   });
 });
 
-// MongoDB connection and server start
+// ===== DB + SERVER =====
 const PORT = process.env.PORT || 5000;
 
 mongoose.connect(process.env.MONGO_URI, { 
   useNewUrlParser: true, 
   useUnifiedTopology: true 
 })
-  .then(() => {
-    app.listen(PORT, () => {
-      console.log(`✅ Server running on http://localhost:${PORT}`);
-      console.log('✅ Connected to MongoDB');
-    });
-  })
-  .catch((err) => {
-    console.error('❌ MongoDB connection error:', err);
-    process.exit(1);
+.then(() => {
+  app.listen(PORT, () => {
+    console.log(`✅ Server running`);
+    console.log('✅ Connected to MongoDB');
   });
+})
+.catch((err) => {
+  console.error('❌ MongoDB connection error:', err);
+  process.exit(1);
+});
