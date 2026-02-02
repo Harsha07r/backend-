@@ -121,6 +121,18 @@ async function checkAvailability(req, res) {
   }
 }
 
+
+// List all bookings (admin usage)
+async function listBookings(req, res) {
+  try {
+    const bookings = await Booking.find().sort({ createdAt: -1 });
+    return res.json({ success: true, bookings });
+  } catch (err) {
+    console.error('List bookings error:', err);
+    return res.status(500).json({ success: false, message: 'Server error' });
+  }
+}
+
 module.exports = {
   createBooking,
   checkAvailability,
