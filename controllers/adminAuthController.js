@@ -1,9 +1,6 @@
 import Admin from '../models/Admin.js';
 import jwt from 'jsonwebtoken';
 
-/* =========================
-   REGISTER ADMIN
-========================= */
 export const registerAdmin = async (req, res) => {
   try {
     const { username, email, password, role } = req.body;
@@ -38,9 +35,6 @@ export const registerAdmin = async (req, res) => {
   }
 };
 
-/* =========================
-   LOGIN ADMIN
-========================= */
 export const loginAdmin = async (req, res) => {
   try {
     const { email, password } = req.body;
