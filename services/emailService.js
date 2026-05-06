@@ -1,14 +1,14 @@
-const nodemailer = require('nodemailer');
+import nodemailer from 'nodemailer';
 
-const transporter = nodemailer.createTransport({
-  service: 'gmail',
-  auth: {
-    user: process.env.ADMIN_EMAIL,
-    pass: process.env.ADMIN_EMAIL_PASSWORD,
-  },
-});
+export const sendAdminNotification = async (booking) => {
+  const transporter = nodemailer.createTransport({
+    service: 'gmail',
+    auth: {
+      user: process.env.ADMIN_EMAIL,
+      pass: process.env.ADMIN_EMAIL_PASSWORD,
+    },
+  });
 
-async function sendAdminNotification(booking) {
   try {
     const mailOptions = {
       from: process.env.ADMIN_EMAIL,
@@ -32,9 +32,17 @@ async function sendAdminNotification(booking) {
     console.error('sendAdminNotification error:', err);
     throw err;
   }
-}
+};
 
-async function sendUserConfirmation(booking) {
+export const sendUserConfirmation = async (booking) => {
+  const transporter = nodemailer.createTransport({
+    service: 'gmail',
+    auth: {
+      user: process.env.ADMIN_EMAIL,
+      pass: process.env.ADMIN_EMAIL_PASSWORD,
+    },
+  });
+
   try {
     const mailOptions = {
       from: process.env.ADMIN_EMAIL,
@@ -56,9 +64,17 @@ async function sendUserConfirmation(booking) {
     console.error('sendUserConfirmation error:', err);
     throw err;
   }
-}
+};
 
-async function sendStatusUpdate(booking, status, adminNotes = '') {
+export const sendStatusUpdate = async (booking, status, adminNotes = '') => {
+  const transporter = nodemailer.createTransport({
+    service: 'gmail',
+    auth: {
+      user: process.env.ADMIN_EMAIL,
+      pass: process.env.ADMIN_EMAIL_PASSWORD,
+    },
+  });
+
   try {
     const mailOptions = {
       from: process.env.ADMIN_EMAIL,
@@ -75,10 +91,4 @@ async function sendStatusUpdate(booking, status, adminNotes = '') {
     console.error('sendStatusUpdate error:', err);
     throw err;
   }
-}
-
-module.exports = {
-  sendAdminNotification,
-  sendUserConfirmation,
-  sendStatusUpdate,
 };

@@ -1,8 +1,8 @@
-const express = require('express');
-const router = express.Router();
+import express from 'express';
+import { registerUser, loginUser } from '../controllers/authController.js';
+import authMiddleware from '../middleware/authMiddleware.js';
 
-const { registerUser, loginUser } = require('../controllers/authController');
-const authMiddleware = require('../middleware/authMiddleware'); // ✅ Add this
+const router = express.Router();
 
 // Public routes
 // Calls registerUser to handle user registration (sign up).
@@ -16,4 +16,4 @@ router.get('/dashboard', authMiddleware, (req, res) => {
   res.json({ message: `Welcome to the dashboard, user ${req.user}` });
 });
 
-module.exports = router;
+export default router;

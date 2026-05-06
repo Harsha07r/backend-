@@ -1,17 +1,15 @@
-const express = require('express');
-const mongoose = require('mongoose');
-const cors = require('cors');
-const cookieParser = require('cookie-parser');
-require('dotenv').config();
+import express from 'express';
+import mongoose from 'mongoose';
+import cors from 'cors';
+import cookieParser from 'cookie-parser';
+import dotenv from 'dotenv';
+import authRoutes from './routes/auth.js';
+import contactRoutes from './routes/contact.js';
+import bookingsRouter from './routes/bookings.js';
+import adminRoutes from './routes/admin.js';
+import authMiddleware from './middleware/authMiddleware.js';
 
-// Import routes
-const authRoutes = require('./routes/auth');
-const contactRoutes = require('./routes/contact');
-const bookingsRouter = require('./routes/bookings');
-const adminRoutes = require('./routes/admin');
-
-// Import middleware
-const authMiddleware = require('./middleware/authMiddleware');
+dotenv.config();
 
 const app = express();
 
@@ -68,3 +66,5 @@ mongoose.connect(process.env.MONGO_URI, {
   console.error('❌ MongoDB connection error:', err);
   process.exit(1);
 });
+
+export default app;

@@ -1,4 +1,4 @@
-const mongoose = require('mongoose');
+import mongoose from 'mongoose';
 
 const bookingSchema = new mongoose.Schema({
   tourId: { type: String, required: true },
@@ -23,4 +23,4 @@ const bookingSchema = new mongoose.Schema({
   adminNotes: { type: String }
 }, { timestamps: true });
 
-module.exports = mongoose.model('Booking', bookingSchema);
+export default mongoose.model('Booking', bookingSchema);

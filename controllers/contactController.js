@@ -1,6 +1,6 @@
 // backend/controllers/contactController.js
-const Contact = require('../models/Contact');
-exports.submitContact = async (req, res) => {
+import Contact from '../models/Contact.js';
+export const submitContact = async (req, res) => {
   try {
     console.log('Incoming contact data:', req.body); // show request
 

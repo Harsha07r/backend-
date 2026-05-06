@@ -1,9 +1,6 @@
-// backend/models/User.js
+import mongoose from 'mongoose';
+import validator from 'validator';
 
-const mongoose = require('mongoose');
-const validator = require('validator');
-
-// Define user schema
 const userSchema = new mongoose.Schema({
   name: {
     type: String,
@@ -27,14 +24,17 @@ const userSchema = new mongoose.Schema({
     type: String,
     required: true,
     validate(value){
-        if(!validator.isStrongPasswordd(value)){
+        if(!validator.isStrongPassword(value)){
             throw new Error("Password is not valid");
         }
     }
+  },
+  profilePhoto: {
+    type: String,
+    default: ''
   }
 }, {
   timestamps: true 
 });
 
-// Export the model
-module.exports = mongoose.model('User', userSchema);
+export default mongoose.model('User', userSchema);

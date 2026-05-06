@@ -1,10 +1,10 @@
-const Admin = require('../models/Admin');
-const jwt = require('jsonwebtoken');
+import Admin from '../models/Admin.js';
+import jwt from 'jsonwebtoken';
 
 /* =========================
    REGISTER ADMIN
 ========================= */
-exports.registerAdmin = async (req, res) => {
+export const registerAdmin = async (req, res) => {
   try {
     const { username, email, password, role } = req.body;
 
@@ -41,7 +41,7 @@ exports.registerAdmin = async (req, res) => {
 /* =========================
    LOGIN ADMIN
 ========================= */
-exports.loginAdmin = async (req, res) => {
+export const loginAdmin = async (req, res) => {
   try {
     const { email, password } = req.body;
 

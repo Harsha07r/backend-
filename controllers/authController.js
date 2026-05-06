@@ -1,10 +1,10 @@
 // backend/controllers/authController.js
-const User = require('../models/User');
-const bcrypt = require('bcryptjs');
-const jwt = require('jsonwebtoken');
-const process = require('process');
+import User from '../models/User.js';
+import bcrypt from 'bcryptjs';
+import jwt from 'jsonwebtoken';
+import process from 'process';
 
-exports.registerUser = async (req, res) => {
+export const registerUser = async (req, res) => {
   try {
     const name = req.body.name.trim();
     const email = req.body.email.trim().toLowerCase();
@@ -24,7 +24,7 @@ exports.registerUser = async (req, res) => {
 };
 
 
-exports.loginUser = async (req, res) => {
+export const loginUser = async (req, res) => {
   try {
     const email = req.body.email.trim().toLowerCase();
     const password = req.body.password;
@@ -51,7 +51,7 @@ exports.loginUser = async (req, res) => {
 // { message: "Login successful", token, user: { id, name, email } }.
 // Client receives this token and must store it for subsequent requests.
 
-  const token = jwt.sign({ userId: user._id, email: user.email }, process.env.JWT_SECRET, {
+  const token = jwt.sign({ userId: user._id, email: user.email, name: user.name, profilePhoto: user.profilePhoto }, process.env.JWT_SECRET, {
       expiresIn: '1h'
     });
 
@@ -61,7 +61,8 @@ exports.loginUser = async (req, res) => {
       user: {
         id: user._id,
         name: user.name,
-        email: user.email
+        email: user.email,
+        profilePhoto: user.profilePhoto
       }
     });
   } catch (err) {

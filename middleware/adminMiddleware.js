@@ -1,6 +1,6 @@
-const jwt = require('jsonwebtoken');
+import jwt from 'jsonwebtoken';
 
-function adminMiddleware(req, res, next) {
+const adminMiddleware = (req, res, next) => {
   try {
     const authHeader = req.header('Authorization');
 
@@ -29,6 +29,6 @@ function adminMiddleware(req, res, next) {
       message: 'Invalid or expired token'
     });
   }
-}
+};
 
-module.exports = adminMiddleware;
+export default adminMiddleware;
