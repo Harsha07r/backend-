@@ -12,7 +12,7 @@ const adminMiddleware = (req, res, next) => {
     }
 
     const token = authHeader.split(' ')[1];
-    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+    const decoded = jwt.verify(token, import.meta.process.env.JWT_SECRET);
 
     if (!decoded.adminId) {
       return res.status(403).json({
@@ -23,12 +23,13 @@ const adminMiddleware = (req, res, next) => {
 
     req.admin = decoded;
     next();
-  } catch (err) {
-    return res.status(401).json({
-      success: false,
-      message: 'Invalid or expired token'
-    });
-  }
-};
+} catch (err) {
+  console.error("JWT Verification Error:", err);
+
+  return res.status(401).json({
+    success: false,
+    message: err.message || "Invalid or expired token"
+  });
+}};
 
 export default adminMiddleware;

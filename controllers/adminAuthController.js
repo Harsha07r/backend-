@@ -54,7 +54,7 @@ export const loginAdmin = async (req, res) => {
         adminId: admin._id,
         role: admin.role
       },
-      process.env.JWT_SECRET,
+      import.meta.process.env.JWT_SECRET,
       { expiresIn: '1d' }
     );
 

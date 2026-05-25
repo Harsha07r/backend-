@@ -1,18 +1,17 @@
 import nodemailer from 'nodemailer';
-
 export const sendAdminNotification = async (booking) => {
   const transporter = nodemailer.createTransport({
     service: 'gmail',
     auth: {
-      user: process.env.ADMIN_EMAIL,
-      pass: process.env.ADMIN_EMAIL_PASSWORD,
+      user: import.meta.process.env.ADMIN_EMAIL,
+      pass: import.meta.process.env.ADMIN_EMAIL_PASSWORD,
     },
   });
 
   try {
     const mailOptions = {
-      from: process.env.ADMIN_EMAIL,
-      to: process.env.ADMIN_EMAIL,
+      from: import.meta.process.env.ADMIN_EMAIL,
+      to: import.meta.process.env.ADMIN_EMAIL,
       subject: `New booking: ${booking.tourName} - ${booking.fullName}`,
       html: `
         <p>New booking received</p>
@@ -38,14 +37,14 @@ export const sendUserConfirmation = async (booking) => {
   const transporter = nodemailer.createTransport({
     service: 'gmail',
     auth: {
-      user: process.env.ADMIN_EMAIL,
-      pass: process.env.ADMIN_EMAIL_PASSWORD,
+      user: import.meta.process.env.ADMIN_EMAIL,
+      pass: import.meta.process.env.ADMIN_EMAIL_PASSWORD,
     },
   });
 
   try {
     const mailOptions = {
-      from: process.env.ADMIN_EMAIL,
+      from: import.meta.process.env.ADMIN_EMAIL,
       to: booking.email,
       subject: `Booking confirmation — ${booking.tourName}`,
       html: `
@@ -70,14 +69,14 @@ export const sendStatusUpdate = async (booking, status, adminNotes = '') => {
   const transporter = nodemailer.createTransport({
     service: 'gmail',
     auth: {
-      user: process.env.ADMIN_EMAIL,
-      pass: process.env.ADMIN_EMAIL_PASSWORD,
+      user: import.meta.process.env.ADMIN_EMAIL,
+      pass: import.meta.process.env.ADMIN_EMAIL_PASSWORD,
     },
   });
 
   try {
     const mailOptions = {
-      from: process.env.ADMIN_EMAIL,
+      from: import.meta.process.env.ADMIN_EMAIL,
       to: booking.email,
       subject: `Booking Update — ${booking.tourName} (${status})`,
       html: `

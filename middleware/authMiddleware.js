@@ -2,7 +2,6 @@ import jwt from 'jsonwebtoken';
 
 const authMiddleware = (req, res, next) => {
   try {
-    // Get token from header
     const authHeader = req.header('Authorization');
     
     if (!authHeader || !authHeader.startsWith('Bearer ')) {
@@ -12,13 +11,10 @@ const authMiddleware = (req, res, next) => {
       });
     }
 
-    // Extract token
     const token = authHeader.split(' ')[1];
 
-    // Verify token
-    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+    const decoded = jwt.verify(token, import.meta.process.env.JWT_SECRET);
     
-    // Attach user info to request
     req.user = decoded;
     next();
 

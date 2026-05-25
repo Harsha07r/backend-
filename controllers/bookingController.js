@@ -1,11 +1,16 @@
 import Booking from '../models/Booking.js';
-import { sendUserConfirmation, sendStatusUpdate } from '../services/emailService.js';
+import {
+  sendUserConfirmation,
+  sendStatusUpdate
+} from '../services/emailService.js';
 
-/* Helper */
 const normalizeDate = (d) => {
   if (!d) return null;
+
   const dt = new Date(d);
+
   if (Number.isNaN(dt.getTime())) return null;
+
   return dt.toISOString().slice(0, 10);
 };
 
@@ -26,9 +31,8 @@ export const createBooking = async (req, res) => {
       otherRequirements = ''
     } = req.body;
 
-    // ✅ Required fields check
+    /* Validation */
     if (!tourId || !fullName || !email || !travelDate) {
-      console.error('Missing fields:', { tourId, fullName, email, travelDate });
       return res.status(400).json({
         success: false,
         message: 'Required booking information missing'
@@ -36,6 +40,7 @@ export const createBooking = async (req, res) => {
     }
 
     const day = normalizeDate(travelDate);
+
     if (!day) {
       return res.status(400).json({
         success: false,
@@ -43,6 +48,7 @@ export const createBooking = async (req, res) => {
       });
     }
 
+    /* Capacity */
     const capacity = process.env.DEFAULT_TOUR_CAPACITY
       ? parseInt(process.env.DEFAULT_TOUR_CAPACITY, 10)
       : 3;
@@ -59,11 +65,12 @@ export const createBooking = async (req, res) => {
       });
     }
 
+    /* Create booking */
     const booking = await Booking.create({
       tourId,
       tourName,
       fullName,
-      email,
+      email: email.trim().toLowerCase(),
       phone,
       travelDate: day,
       numberOfPeople,
@@ -72,19 +79,33 @@ export const createBooking = async (req, res) => {
       status: 'Pending'
     });
 
-    try {
-      await sendUserConfirmation(booking);
-    } catch (e) {
-      console.error('Email error:', e);
-    }
+    console.log('Booking saved successfully');
 
-    return res.status(201).json({ success: true, booking });
+    /* Send response immediately */
+    res.status(201).json({
+      success: true,
+      message: 'Booking successful',
+      booking
+    });
+
+    /* Send email in background */
+    sendUserConfirmation(booking)
+      .then(() => {
+        console.log('Confirmation email sent');
+      })
+      .catch((err) => {
+        console.error('Email error:', err);
+      });
 
   } catch (err) {
     console.error('Create booking error:', err);
-    return res.status(500).json({ success: false, message: 'Server error' });
+
+    return res.status(500).json({
+      success: false,
+      message: err.message || 'Server error'
+    });
   }
-}
+};
 
 /* CHECK AVAILABILITY */
 export const checkAvailability = async (req, res) => {
@@ -93,6 +114,7 @@ export const checkAvailability = async (req, res) => {
     const { date } = req.query;
 
     const day = normalizeDate(date);
+
     if (!tourId || !day) {
       return res.status(400).json({
         success: false,
@@ -117,11 +139,16 @@ export const checkAvailability = async (req, res) => {
     });
 
   } catch (err) {
-    return res.status(500).json({ success: false, message: 'Server error' });
-  }
-}
+    console.error('Availability error:', err);
 
-// Update booking status (admin usage)
+    return res.status(500).json({
+      success: false,
+      message: 'Server error'
+    });
+  }
+};
+
+/* UPDATE BOOKING STATUS */
 export const updateBookingStatus = async (req, res) => {
   try {
     const { bookingId } = req.params;
@@ -147,25 +174,38 @@ export const updateBookingStatus = async (req, res) => {
       });
     }
 
-    try {
-      await sendStatusUpdate(booking);
-    } catch (e) {
-      console.error('Email error:', e);
-    }
+    res.json({
+      success: true,
+      booking
+    });
 
-    return res.json({ success: true, booking });
+    sendStatusUpdate(booking)
+      .then(() => {
+        console.log('Status email sent');
+      })
+      .catch((err) => {
+        console.error('Email error:', err);
+      });
 
   } catch (err) {
     console.error('Update booking status error:', err);
-    return res.status(500).json({ success: false, message: 'Server error' });
-  }
-}
 
-// List all bookings (admin usage)
+    return res.status(500).json({
+      success: false,
+      message: 'Server error'
+    });
+  }
+};
+
+/* LIST BOOKINGS */
 export const listBookings = async (req, res) => {
   try {
-    const filter = req.query.status ? { status: req.query.status } : {};
-    const bookings = await Booking.find(filter).sort({ createdAt: -1 });
+    const filter = req.query.status
+      ? { status: req.query.status }
+      : {};
+
+    const bookings = await Booking.find(filter)
+      .sort({ createdAt: -1 });
 
     const [total, pending, confirmed, rejected] = await Promise.all([
       Booking.countDocuments(),
@@ -177,10 +217,20 @@ export const listBookings = async (req, res) => {
     return res.json({
       success: true,
       bookings,
-      stats: { total, pending, confirmed, rejected }
+      stats: {
+        total,
+        pending,
+        confirmed,
+        rejected
+      }
     });
+
   } catch (err) {
     console.error('List bookings error:', err);
-    return res.status(500).json({ success: false, message: 'Server error' });
+
+    return res.status(500).json({
+      success: false,
+      message: 'Server error'
+    });
   }
 };
