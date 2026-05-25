@@ -1,35 +1,59 @@
+
 import jwt from 'jsonwebtoken';
 
 const adminMiddleware = (req, res, next) => {
-  try {
-    const authHeader = req.header('Authorization');
 
-    if (!authHeader || !authHeader.startsWith('Bearer ')) {
+  try {
+
+    const authHeader =
+      req.header('Authorization');
+
+    if (
+      !authHeader ||
+      !authHeader.startsWith('Bearer ')
+    ) {
+
       return res.status(401).json({
         success: false,
         message: 'Access denied. No token provided.'
       });
     }
 
-    const token = authHeader.split(' ')[1];
-    const decoded = jwt.verify(token, import.meta.process.env.JWT_SECRET);
+    const token =
+      authHeader.split(' ')[1];
+
+    const decoded = jwt.verify(
+      token,
+      process.env.JWT_SECRET
+    );
 
     if (!decoded.adminId) {
+
       return res.status(403).json({
         success: false,
-        message: 'Access denied. Admin privileges required.'
+        message:
+          'Access denied. Admin privileges required.'
       });
     }
 
     req.admin = decoded;
-    next();
-} catch (err) {
-  console.error("JWT Verification Error:", err);
 
-  return res.status(401).json({
-    success: false,
-    message: err.message || "Invalid or expired token"
-  });
-}};
+    next();
+
+  } catch (err) {
+
+    console.error(
+      'JWT Verification Error:',
+      err
+    );
+
+    return res.status(401).json({
+      success: false,
+      message:
+        err.message ||
+        'Invalid or expired token'
+    });
+  }
+};
 
 export default adminMiddleware;
