@@ -8,6 +8,7 @@ import contactRoutes from './routes/contact.js';
 import bookingsRouter from './routes/bookings.js';
 import adminRoutes from './routes/admin.js';
 import authMiddleware from './middleware/authMiddleware.js';
+import Admin from './models/Admin.js';
 
 dotenv.config();
 
@@ -49,11 +50,37 @@ app.get('/', (req, res) => {
 
 const PORT = process.env.PORT || 5000;
 
-mongoose.connect(process.env.MONGO_URI, { 
-  useNewUrlParser: true, 
-  useUnifiedTopology: true 
+async function seedAdmin() {
+  const email = process.env.ADMIN_EMAIL;
+  const password = process.env.ADMIN_PASSWORD;
+
+  console.log('[seed] ADMIN_EMAIL:', email);
+  console.log('[seed] ADMIN_PASSWORD set:', !!password);
+
+  if (!email || !password) {
+    console.warn('[seed] ADMIN_EMAIL or ADMIN_PASSWORD not set — skipping');
+    return;
+  }
+
+  try {
+    await Admin.deleteMany({ $or: [{ email: email.toLowerCase() }, { username: 'admin' }] });
+    const admin = await Admin.create({ username: 'admin', email: email.toLowerCase(), password });
+    console.log('[seed] Admin created, id:', admin._id);
+
+    // Verify the password was hashed correctly
+    const ok = await admin.comparePassword(password);
+    console.log('[seed] Password verify after seed:', ok);
+  } catch (err) {
+    console.error('[seed] Error seeding admin:', err.message);
+  }
+}
+
+mongoose.connect(process.env.MONGO_URI, {
+  useNewUrlParser: true,
+  useUnifiedTopology: true
 })
-.then(() => {
+.then(async () => {
+  await seedAdmin();
   app.listen(PORT, () => {
     console.log(`Server running`);
     console.log('Connected to MongoDB');
