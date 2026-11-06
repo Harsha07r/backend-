@@ -24,7 +24,15 @@ const schema = z
     // Bootstrap super admin (created only if no super admin exists yet).
     ADMIN_EMAIL: z.string().optional(),
     ADMIN_PASSWORD: z.string().optional(),
-    ADMIN_EMAIL_PASSWORD: z.string().optional(),
+    ADMIN_EMAIL_PASSWORD: z.string().optional(), // legacy Gmail app password
+
+    // Outgoing mail via any SMTP provider (Brevo, Resend, Zoho, your own Gmail...).
+    SMTP_HOST: z.string().optional(),
+    SMTP_PORT: z.coerce.number().int().positive().default(587),
+    SMTP_USER: z.string().optional(),
+    SMTP_PASS: z.string().optional(),
+    MAIL_FROM: z.string().optional(), // e.g. "Royal Horizon <enquiries@royalhorizon.in>"
+    ADMIN_NOTIFY_EMAIL: z.string().optional(), // who receives new enquiry alerts
 
     // Optional hard cap of enquiries per tour per day. Unset = unlimited.
     DEFAULT_TOUR_CAPACITY: z.coerce.number().int().positive().optional(),

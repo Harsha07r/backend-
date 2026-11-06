@@ -2,23 +2,42 @@ import nodemailer from 'nodemailer';
 import { env, isTest } from '../config/env.js';
 import { escapeHtml as e } from '../utils/escape.js';
 
-let transporter;
+let transporter; // undefined = not built yet, null = email disabled
 
+// SMTP_* settings win. The old Gmail variables still work as a fallback.
 const getTransporter = () => {
-  if (isTest || !env.ADMIN_EMAIL || !env.ADMIN_EMAIL_PASSWORD) return null;
-  transporter ??= nodemailer.createTransport({
-    service: 'gmail',
-    auth: { user: env.ADMIN_EMAIL, pass: env.ADMIN_EMAIL_PASSWORD },
-  });
+  if (isTest) return null;
+  if (transporter !== undefined) return transporter;
+
+  if (env.SMTP_HOST && env.SMTP_USER && env.SMTP_PASS) {
+    transporter = nodemailer.createTransport({
+      host: env.SMTP_HOST,
+      port: env.SMTP_PORT,
+      secure: env.SMTP_PORT === 465,
+      auth: { user: env.SMTP_USER, pass: env.SMTP_PASS },
+    });
+  } else if (env.ADMIN_EMAIL && env.ADMIN_EMAIL_PASSWORD) {
+    transporter = nodemailer.createTransport({
+      service: 'gmail',
+      auth: { user: env.ADMIN_EMAIL, pass: env.ADMIN_EMAIL_PASSWORD },
+    });
+  } else {
+    console.warn('[email] No mail settings found, outgoing email is disabled.');
+    transporter = null;
+  }
   return transporter;
 };
+
+const fromAddress = () =>
+  env.MAIL_FROM || `"Royal Horizon" <${env.SMTP_USER || env.ADMIN_EMAIL}>`;
+const notifyTo = () => env.ADMIN_NOTIFY_EMAIL || env.ADMIN_EMAIL;
 
 // Never throws: a failing mail server must not fail the API request.
 const send = async (options) => {
   const t = getTransporter();
-  if (!t) return false;
+  if (!t || !options.to) return false;
   try {
-    await t.sendMail({ from: `"Royal Horizon" <${env.ADMIN_EMAIL}>`, ...options });
+    await t.sendMail({ from: fromAddress(), ...options });
     return true;
   } catch (err) {
     console.error('[email] failed:', err.message);
@@ -31,7 +50,7 @@ const fmtDate = (d) =>
 
 export const sendAdminNotification = (booking) =>
   send({
-    to: env.ADMIN_EMAIL,
+    to: notifyTo(),
     replyTo: booking.email,
     subject: `New enquiry: ${booking.tourName} - ${booking.fullName}`,
     html: `
@@ -75,7 +94,7 @@ export const sendStatusUpdate = (booking) =>
 
 export const sendContactNotification = (contact) =>
   send({
-    to: env.ADMIN_EMAIL,
+    to: notifyTo(),
     replyTo: contact.email,
     subject: `New message from ${contact.name}`,
     html: `
