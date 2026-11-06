@@ -232,6 +232,22 @@ describe('tours API', () => {
     expect((await support.post('/api/tours/admin').set(XHR).send(tourPayload())).status).toBe(403);
   });
 
+  it('keeps untouched fields when a tour is partially updated', async () => {
+    const manager = await loginAs('manager');
+    const created = await manager
+      .post('/api/tours/admin')
+      .set(XHR)
+      .send(tourPayload({ highlights: ['Pangong Lake'], description: 'Long text', isFeatured: true }));
+    const id = created.body.tour._id;
+
+    const res = await manager.put(`/api/tours/admin/${id}`).set(XHR).send({ isPublished: false });
+    expect(res.status).toBe(200);
+    expect(res.body.tour.isPublished).toBe(false);
+    expect(res.body.tour.highlights).toEqual(['Pangong Lake']);
+    expect(res.body.tour.description).toBe('Long text');
+    expect(res.body.tour.isFeatured).toBe(true);
+  });
+
   it('validates tour input', async () => {
     const manager = await loginAs('manager');
     const res = await manager.post('/api/tours/admin').set(XHR).send(tourPayload({ category: 'Nonsense', durationDays: 0 }));

@@ -175,7 +175,19 @@ const tourBase = z.object({
 });
 
 export const createTour = tourBase;
-export const updateTour = tourBase.partial().refine((v) => Object.keys(v).length > 0, 'Nothing to update');
+// For updates every field is optional and has NO default. Keeping the defaults would turn a
+// partial update such as { isPublished: false } into a full one that wipes arrays and text.
+const withoutDefaults = (shape) =>
+  Object.fromEntries(
+    Object.entries(shape).map(([key, field]) => [
+      key,
+      (field instanceof z.ZodDefault ? field.unwrap() : field).optional(),
+    ])
+  );
+
+export const updateTour = z
+  .object(withoutDefaults(tourBase.shape))
+  .refine((v) => Object.keys(v).length > 0, 'Nothing to update');
 
 export const listToursQuery = z.object({
   q: z.string().trim().max(100).optional(),
