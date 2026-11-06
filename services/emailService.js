@@ -1,93 +1,84 @@
 import nodemailer from 'nodemailer';
-export const sendAdminNotification = async (booking) => {
-  const transporter = nodemailer.createTransport({
-    service: 'gmail',
-    auth: {
-      user: import.meta.process.env.ADMIN_EMAIL,
-      pass: import.meta.process.env.ADMIN_EMAIL_PASSWORD,
-    },
-  });
+import { env, isTest } from '../config/env.js';
+import { escapeHtml as e } from '../utils/escape.js';
 
+let transporter;
+
+const getTransporter = () => {
+  if (isTest || !env.ADMIN_EMAIL || !env.ADMIN_EMAIL_PASSWORD) return null;
+  transporter ??= nodemailer.createTransport({
+    service: 'gmail',
+    auth: { user: env.ADMIN_EMAIL, pass: env.ADMIN_EMAIL_PASSWORD },
+  });
+  return transporter;
+};
+
+// Never throws: a failing mail server must not fail the API request.
+const send = async (options) => {
+  const t = getTransporter();
+  if (!t) return false;
   try {
-    const mailOptions = {
-      from: import.meta.process.env.ADMIN_EMAIL,
-      to: import.meta.process.env.ADMIN_EMAIL,
-      subject: `New booking: ${booking.tourName} - ${booking.fullName}`,
-      html: `
-        <p>New booking received</p>
-        <ul>
-          <li><strong>Tour:</strong> ${booking.tourName}</li>
-          <li><strong>Name:</strong> ${booking.fullName}</li>
-          <li><strong>Email:</strong> ${booking.email}</li>
-          <li><strong>Phone:</strong> ${booking.phone}</li>
-          <li><strong>Date:</strong> ${new Date(booking.travelDate).toLocaleString()}</li>
-          <li><strong>People:</strong> ${booking.numberOfPeople}</li>
-          <li><strong>Total:</strong> ₹${booking.totalPrice}</li>
-        </ul>
-      `,
-    };
-    return transporter.sendMail(mailOptions);
+    await t.sendMail({ from: `"Royal Horizon" <${env.ADMIN_EMAIL}>`, ...options });
+    return true;
   } catch (err) {
-    console.error('sendAdminNotification error:', err);
-    throw err;
+    console.error('[email] failed:', err.message);
+    return false;
   }
 };
 
-export const sendUserConfirmation = async (booking) => {
-  const transporter = nodemailer.createTransport({
-    service: 'gmail',
-    auth: {
-      user: import.meta.process.env.ADMIN_EMAIL,
-      pass: import.meta.process.env.ADMIN_EMAIL_PASSWORD,
-    },
+const fmtDate = (d) =>
+  new Date(d).toLocaleDateString('en-IN', { day: 'numeric', month: 'long', year: 'numeric' });
+
+export const sendAdminNotification = (booking) =>
+  send({
+    to: env.ADMIN_EMAIL,
+    replyTo: booking.email,
+    subject: `New enquiry: ${booking.tourName} - ${booking.fullName}`,
+    html: `
+      <p>New tour enquiry received.</p>
+      <ul>
+        <li><strong>Tour:</strong> ${e(booking.tourName)}</li>
+        <li><strong>Name:</strong> ${e(booking.fullName)}</li>
+        <li><strong>Email:</strong> ${e(booking.email)}</li>
+        <li><strong>Phone:</strong> ${e(booking.phone || '-')}</li>
+        <li><strong>Travel date:</strong> ${fmtDate(booking.travelDate)}</li>
+        <li><strong>Travellers:</strong> ${booking.numberOfPeople}</li>
+        <li><strong>Requirements:</strong> ${e(booking.otherRequirements || '-')}</li>
+      </ul>`,
   });
 
-  try {
-    const mailOptions = {
-      from: import.meta.process.env.ADMIN_EMAIL,
-      to: booking.email,
-      subject: `Booking confirmation — ${booking.tourName}`,
-      html: `
-        <p>Hi ${booking.fullName},</p>
-        <p>Thanks for booking <strong>${booking.tourName}</strong>. Your booking id is <strong>${booking._id}</strong>.</p>
-        <ul>
-          <li><strong>Date:</strong> ${new Date(booking.travelDate).toLocaleDateString()}</li>
-          <li><strong>People:</strong> ${booking.numberOfPeople}</li>
-          <li><strong>Total:</strong> ₹${booking.totalPrice}</li>
-        </ul>
-        <p>We will contact you shortly with further details.</p>
-      `,
-    };
-    return transporter.sendMail(mailOptions);
-  } catch (err) {
-    console.error('sendUserConfirmation error:', err);
-    throw err;
-  }
-};
-
-export const sendStatusUpdate = async (booking, status, adminNotes = '') => {
-  const transporter = nodemailer.createTransport({
-    service: 'gmail',
-    auth: {
-      user: import.meta.process.env.ADMIN_EMAIL,
-      pass: import.meta.process.env.ADMIN_EMAIL_PASSWORD,
-    },
+export const sendUserConfirmation = (booking) =>
+  send({
+    to: booking.email,
+    subject: `We received your enquiry - ${booking.tourName}`,
+    html: `
+      <p>Hi ${e(booking.fullName)},</p>
+      <p>Thank you for your interest in <strong>${e(booking.tourName)}</strong>.
+      Your reference is <strong>${booking._id}</strong>.</p>
+      <ul>
+        <li><strong>Travel date:</strong> ${fmtDate(booking.travelDate)}</li>
+        <li><strong>Travellers:</strong> ${booking.numberOfPeople}</li>
+      </ul>
+      <p>Our team will contact you shortly to plan your trip.</p>`,
   });
 
-  try {
-    const mailOptions = {
-      from: import.meta.process.env.ADMIN_EMAIL,
-      to: booking.email,
-      subject: `Booking Update — ${booking.tourName} (${status})`,
-      html: `
-        <p>Hi ${booking.fullName},</p>
-        <p>Your booking <strong>${booking._id}</strong> status has been updated to <strong>${status}</strong>.</p>
-        ${adminNotes ? `<p><strong>Notes:</strong> ${adminNotes}</p>` : ''}
-      `,
-    };
-    return transporter.sendMail(mailOptions);
-  } catch (err) {
-    console.error('sendStatusUpdate error:', err);
-    throw err;
-  }
-};
+export const sendStatusUpdate = (booking) =>
+  send({
+    to: booking.email,
+    subject: `Enquiry update - ${booking.tourName} (${booking.status})`,
+    html: `
+      <p>Hi ${e(booking.fullName)},</p>
+      <p>Your enquiry <strong>${booking._id}</strong> for <strong>${e(booking.tourName)}</strong>
+      is now <strong>${e(booking.status)}</strong>.</p>
+      ${booking.adminNotes ? `<p><strong>Note from our team:</strong> ${e(booking.adminNotes)}</p>` : ''}`,
+  });
+
+export const sendContactNotification = (contact) =>
+  send({
+    to: env.ADMIN_EMAIL,
+    replyTo: contact.email,
+    subject: `New message from ${contact.name}`,
+    html: `
+      <p><strong>${e(contact.name)}</strong> (${e(contact.email)}${contact.phone ? `, ${e(contact.phone)}` : ''}) wrote:</p>
+      <p>${e(contact.message)}</p>`,
+  });

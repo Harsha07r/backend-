@@ -1,14 +1,16 @@
-import express from 'express';
-import { registerUser, loginUser } from '../controllers/authController.js';
-import authMiddleware from '../middleware/authMiddleware.js';
+import { Router } from 'express';
+import * as c from '../controllers/authController.js';
+import { authenticateUser } from '../middleware/auth.js';
+import { validate } from '../middleware/validate.js';
+import { loginLimiter } from '../middleware/rateLimit.js';
+import * as v from '../validators/index.js';
 
-const router = express.Router();
+const router = Router();
 
-router.post('/register', registerUser);
-router.post('/login', loginUser);
-
-router.get('/dashboard', authMiddleware, (req, res) => {
-  res.json({ message: `Welcome to the dashboard, user ${req.user}` });
-});
+router.post('/register', loginLimiter, validate({ body: v.registerUser }), c.registerUser);
+router.post('/login', loginLimiter, validate({ body: v.login }), c.loginUser);
+router.post('/refresh', c.refresh);
+router.post('/logout', c.logout);
+router.get('/me', authenticateUser, c.me);
 
 export default router;

@@ -1,40 +1,16 @@
 import mongoose from 'mongoose';
-import validator from 'validator';
 
-const userSchema = new mongoose.Schema({
-  name: {
-    type: String,
-    required: true,
-    minlength: 3
+// Password strength is enforced by the zod validator *before* hashing; the
+// stored value is always a bcrypt hash, so no schema-level rule can apply here.
+const userSchema = new mongoose.Schema(
+  {
+    name: { type: String, required: true, trim: true, minlength: 3, maxlength: 80 },
+    email: { type: String, required: true, unique: true, lowercase: true, trim: true },
+    password: { type: String, required: true, select: false },
+    profilePhoto: { type: String, default: '' },
+    tokenVersion: { type: Number, default: 0 },
   },
-  email: {
-    type: String,
-    required: true,
-    unique: true,
-    lowercase: true,
-    trim: true,
-    //Inbuilt Validator Library function
-    validate(value) {
-      if (!validator.isEmail(value)) {
-        throw new Error("Email is not valid");
-      }
-    }
-  },
-  password: {
-    type: String,
-    required: true,
-    validate(value){
-        if(!validator.isStrongPassword(value)){
-            throw new Error("Password is not valid");
-        }
-    }
-  },
-  profilePhoto: {
-    type: String,
-    default: ''
-  }
-}, {
-  timestamps: true 
-});
+  { timestamps: true }
+);
 
 export default mongoose.model('User', userSchema);
