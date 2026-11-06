@@ -13,7 +13,12 @@ import Tour from '../models/Tour.js';
 const force = process.argv.includes('--force');
 const tours = JSON.parse(fs.readFileSync(new URL('../data/tours.seed.json', import.meta.url), 'utf8'));
 
-await mongoose.connect(env.MONGO_URI);
+// Optional: SEED_DB_NAME=test npm run seed:tours  seeds that database instead of the one
+// named in MONGO_URI. Needed when the URI has no database name (MongoDB then uses "test").
+// trim(): Windows "set NAME=test && ..." keeps the space before "&&" as part of the value.
+const dbName = process.env.SEED_DB_NAME?.trim();
+await mongoose.connect(env.MONGO_URI, dbName ? { dbName } : undefined);
+console.log(`Seeding database: ${mongoose.connection.name}`);
 
 let created = 0;
 let updated = 0;
